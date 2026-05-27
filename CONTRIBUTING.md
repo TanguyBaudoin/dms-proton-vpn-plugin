@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in improving the AdGuard VPN plugin! Whether you're fixing a bug, adding a feature, or translating the UI — all contributions are welcome.
+Thanks for your interest in improving the Proton VPN plugin! Whether you're fixing a bug, adding a feature, or translating the UI — all contributions are welcome.
 
 ---
 
@@ -8,12 +8,12 @@ Thanks for your interest in improving the AdGuard VPN plugin! Whether you're fix
 
 ```bash
 # 1. Clone the repo into DMS plugins directory
-git clone https://github.com/bernardopg/dms-adguard-vpn-plugin.git \
-  ~/.config/DankMaterialShell/plugins/adguardVPplugin
+git clone git@github.com:TanguyBaudoin/dms-proton-vpn-plugin.git \
+  ~/.config/DankMaterialShell/plugins/protonVPplugin
 
 # 2. Make your changes, then reload
-dms ipc plugins reload adguardVPplugin
-dms ipc plugins status adguardVPplugin
+dms ipc plugins reload protonVPplugin
+dms ipc plugins status protonVPplugin
 
 # 3. Run quality checks before committing
 node scripts/check-i18n-keys.mjs   # i18n key parity
@@ -26,7 +26,7 @@ bash scripts/validate-qml.sh        # QML syntax validation
 ## Development Workflow
 
 1. **Create a branch** from `main` with a descriptive name (e.g., `fix/star-button-zorder`).
-2. **Edit & test** — the fastest feedback loop is `dms ipc plugins reload adguardVPplugin`.
+2. **Edit & test** — the fastest feedback loop is `dms ipc plugins reload protonVPplugin`.
 3. **Run all checks** (see above) — they mirror what CI will enforce.
 4. **Commit** with a clear message following [Conventional Commits](https://www.conventionalcommits.org/) style:
    - `fix:` for bug fixes
@@ -45,7 +45,7 @@ TL;DR:
 
 1. Copy `i18n/en.js` → `i18n/<locale>.js`.
 2. Translate values; **keep keys and `{placeholder}` tokens unchanged**.
-3. Register the locale in `AdGuardVpnI18n.qml` and `AdGuardVpnSettings.qml`.
+3. Register the locale in `ProtonVpnI18n.qml` and `ProtonVpnSettings.qml`.
 4. Run `node scripts/check-i18n-keys.mjs` to verify parity.
 5. Open a PR.
 

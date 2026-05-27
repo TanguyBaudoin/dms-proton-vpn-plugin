@@ -9,26 +9,27 @@ import qs.Modules.Plugins
 PluginComponent {
     id: root
 
-    pluginId: "adguardVPplugin"
-    layerNamespacePlugin: "adguard-vpn"
+    pluginId: "protonVPNplugin"
+    layerNamespacePlugin: "proton-vpn"
 
     property string locationInputText: ""
     property string locationsSearchText: ""
+    property string citySearchText: ""
     property string dnsInputText: ""
     property bool dnsInputFocused: false
     property bool showLocationInBar: pluginData.showLocationInBar !== undefined ? pluginData.showLocationInBar : true
 
-    readonly property bool commandsAvailable: AdGuardVpnService.cliAvailable && !AdGuardVpnService.commandRunning
-    readonly property color heroAccent: !AdGuardVpnService.cliAvailable ? Theme.warning : (AdGuardVpnService.isConnected ? Theme.primary : Theme.surfaceText)
+    readonly property bool commandsAvailable: VpnService.cliAvailable && !VpnService.commandRunning
+    readonly property color heroAccent: !VpnService.cliAvailable ? Theme.warning : (VpnService.isConnected ? Theme.primary : Theme.surfaceText)
 
     readonly property var filteredLocations: {
-        const source = AdGuardVpnService.locations || [];
+        const source = VpnService.locations || [];
         const favorites = [];
         const others = [];
 
         for (let i = 0; i < source.length; i++) {
             const item = source[i] || {};
-            if (AdGuardVpnService.isFavoriteLocation(item.iso)) {
+            if (VpnService.isFavoriteLocation(item.iso)) {
                 favorites.push(item);
             } else {
                 others.push(item);
@@ -56,65 +57,85 @@ PluginComponent {
         return filtered;
     }
 
+    readonly property var filteredCities: {
+        const source = VpnService.currentCities || [];
+        const query = (root.citySearchText || "").toString().trim().toLowerCase();
+        if (!query) {
+            return source;
+        }
+
+        const filtered = [];
+        for (let i = 0; i < source.length; i++) {
+            const item = source[i] || {};
+            const name = (item.name || "").toString().toLowerCase();
+            const features = (item.featuresText || "").toString().toLowerCase();
+            if (name.indexOf(query) >= 0 || features.indexOf(query) >= 0) {
+                filtered.push(item);
+            }
+        }
+
+        return filtered;
+    }
+
     function t(key, fallback, params) {
-        return AdGuardVpnI18n.tr(key, fallback, params);
+        return VpnI18n.tr(key, fallback, params);
     }
 
     readonly property string barIconName: {
-        if (!AdGuardVpnService.cliAvailable) {
+        if (!VpnService.cliAvailable) {
             return "warning";
         }
-        if (AdGuardVpnService.commandRunning) {
+        if (VpnService.commandRunning) {
             return "sync";
         }
-        return AdGuardVpnService.isConnected ? "shield_lock" : "shield";
+        return VpnService.isConnected ? "shield_lock" : "shield";
     }
 
     readonly property color barIconColor: {
-        if (!AdGuardVpnService.cliAvailable) {
+        if (!VpnService.cliAvailable) {
             return Theme.warning;
         }
-        if (AdGuardVpnService.isConnected) {
+        if (VpnService.isConnected) {
             return Theme.primary;
         }
         return Theme.surfaceVariantText;
     }
 
     readonly property string barText: {
-        if (!AdGuardVpnService.cliAvailable) {
+        if (!VpnService.cliAvailable) {
             return root.t("bar.cli", "CLI");
         }
-        if (AdGuardVpnService.commandRunning) {
+        if (VpnService.commandRunning) {
             return root.t("bar.pending", "...");
         }
-        if (AdGuardVpnService.isConnected) {
-            return AdGuardVpnService.connectedLocation || root.t("bar.connected_short", "Connected");
+        if (VpnService.isConnected) {
+            return VpnService.connectedLocation || root.t("bar.connected_short", "Connected");
         }
         return root.t("bar.off", "Off");
     }
 
     readonly property string heroTitle: {
-        if (!AdGuardVpnService.cliAvailable) {
-            return root.t("status.cli_unavailable", "adguardvpn-cli unavailable");
+        if (!VpnService.cliAvailable) {
+            return root.t("status.cli_unavailable", "protonvpn unavailable");
         }
-        if (AdGuardVpnService.isConnected) {
+        if (VpnService.isConnected) {
             return root.t("summary.connected_to", "Connected to {location}", {
-                location: root.safeText(AdGuardVpnService.connectedLocation, root.t("summary.location_unknown", "location unknown"))
+                location: root.safeText(VpnService.connectedLocation, root.t("summary.location_unknown", "location unknown"))
             });
         }
-        return root.safeText(AdGuardVpnService.statusSummary, root.t("status.disconnected", "Disconnected"));
+        return root.safeText(VpnService.statusSummary, root.t("status.disconnected", "Disconnected"));
     }
 
     readonly property string heroSupportingText: {
-        if (AdGuardVpnService.lastError) {
-            return AdGuardVpnService.lastError;
+        if (VpnService.lastError) {
+            return VpnService.lastError;
         }
-        if (!AdGuardVpnService.cliAvailable) {
+        if (!VpnService.cliAvailable) {
             return root.t("hero.unavailable_hint", "Check the CLI path and session state in settings.");
         }
-        if (AdGuardVpnService.commandRunning) {
+        if (VpnService.commandRunning) {
             return root.t("status.running_command", "Running: {command}", {
-                command: AdGuardVpnService.runningCommand
+                command: VpnService.runningCommand
             });
         }
         return root.t("hero.offline_hint", "Ready to secure traffic, switch regions, and tune transport behavior.");
@@ -510,23 +531,29 @@ PluginComponent {
             }
 
             locationInputText = pluginData.defaultLocation || "";
+            locationsSearchText = locationInputText;
         }
     }
 
     Connections {
-        target: AdGuardVpnService
+        target: VpnService
 
         function onDnsUpstreamChanged() {
             if (!root.dnsInputFocused) {
-                dnsInputText = AdGuardVpnService.dnsUpstream || "";
+                dnsInputText = VpnService.dnsUpstream || "";
             }
+        }
+
+        function onSelectedCountryIsoChanged() {
+            root.citySearchText = "";
         }
     }
 
     Component.onCompleted: {
         locationInputText = pluginData.defaultLocation || "";
-        dnsInputText = AdGuardVpnService.dnsUpstream || "";
-        AdGuardVpnService.refreshAll(true);
+        locationsSearchText = locationInputText;
+        dnsInputText = VpnService.dnsUpstream || "";
+        VpnService.refreshAll(true);
     }
 
     popoutWidth: 520
@@ -543,7 +570,7 @@ PluginComponent {
                 anchors.verticalCenter: parent.verticalCenter
 
                 RotationAnimator on rotation {
-                    running: AdGuardVpnService.commandRunning
+                    running: VpnService.commandRunning
                     from: 0
                     to: 360
                     loops: Animation.Infinite
@@ -574,7 +601,7 @@ PluginComponent {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 RotationAnimator on rotation {
-                    running: AdGuardVpnService.commandRunning
+                    running: VpnService.commandRunning
                     from: 0
                     to: 360
                     loops: Animation.Infinite
@@ -588,8 +615,8 @@ PluginComponent {
         PopoutComponent {
             id: popout
 
-            headerText: root.t("app.title", "AdGuard VPN")
-            detailsText: AdGuardVpnService.cliAvailable ? AdGuardVpnService.statusSummary : root.t("popout.details.cli_unavailable", "adguardvpn-cli not available")
+            headerText: root.t("app.title", "Proton VPN")
+            detailsText: VpnService.cliAvailable ? VpnService.statusSummary : root.t("popout.details.cli_unavailable", "protonvpn not available")
             showCloseButton: true
 
             Item {
@@ -620,7 +647,7 @@ PluginComponent {
                             radius: Theme.cornerRadius + 6
                             color: Theme.surfaceContainerHigh
                             border.width: 1
-                            border.color: Theme.withAlpha(root.heroAccent, AdGuardVpnService.isConnected ? 0.34 : 0.18)
+                            border.color: Theme.withAlpha(root.heroAccent, VpnService.isConnected ? 0.34 : 0.18)
                             implicitHeight: heroColumn.implicitHeight + Theme.spacingL * 2
                             clip: true
 
@@ -630,7 +657,7 @@ PluginComponent {
                                 gradient: Gradient {
                                     GradientStop {
                                         position: 0.0
-                                        color: Theme.withAlpha(root.heroAccent, AdGuardVpnService.isConnected ? 0.16 : 0.07)
+                                        color: Theme.withAlpha(root.heroAccent, VpnService.isConnected ? 0.16 : 0.07)
                                     }
                                     GradientStop {
                                         position: 0.55
@@ -686,7 +713,7 @@ PluginComponent {
                                             color: root.heroAccent
 
                                             RotationAnimator on rotation {
-                                                running: AdGuardVpnService.commandRunning
+                                                running: VpnService.commandRunning
                                                 from: 0
                                                 to: 360
                                                 loops: Animation.Infinite
@@ -720,14 +747,14 @@ PluginComponent {
                                     TagChip {
                                         text: root.barText
                                         toneColor: root.heroAccent
-                                        strong: AdGuardVpnService.isConnected || !AdGuardVpnService.cliAvailable
+                                        strong: VpnService.isConnected || !VpnService.cliAvailable
                                     }
                                 }
 
                                 StyledText {
                                     width: parent.width
                                     text: root.heroSupportingText
-                                    color: AdGuardVpnService.lastError ? Theme.warning : Theme.surfaceVariantText
+                                    color: VpnService.lastError ? Theme.warning : Theme.surfaceVariantText
                                     font.pixelSize: Theme.fontSizeSmall
                                     wrapMode: Text.WordWrap
                                 }
@@ -738,33 +765,33 @@ PluginComponent {
 
                                     TagChip {
                                         text: root.t("summary.plan_devices", "Plan: {plan}  •  Devices: {devices}", {
-                                            plan: root.safeText(AdGuardVpnService.accountTier, root.t("time.unknown", "unknown")),
-                                            devices: (AdGuardVpnService.maxDevices || "-")
+                                            plan: root.safeText(VpnService.accountTier, root.t("time.unknown", "unknown")),
+                                            devices: (VpnService.maxDevices || "-")
                                         })
                                         toneColor: root.heroAccent
-                                        strong: AdGuardVpnService.isConnected
+                                        strong: VpnService.isConnected
                                     }
 
                                     TagChip {
-                                        visible: !!AdGuardVpnService.subscriptionRenewDate
+                                        visible: !!VpnService.subscriptionRenewDate
                                         text: root.t("summary.renewal", "Renewal: {date}", {
-                                            date: AdGuardVpnService.subscriptionRenewDate
+                                            date: VpnService.subscriptionRenewDate
                                         })
                                         toneColor: root.heroAccent
                                     }
 
                                     TagChip {
-                                        text: `${root.t("config.mode", "Mode")}: ${root.safeText(AdGuardVpnService.currentMode, "-")}`
+                                        text: `${root.t("config.mode", "Mode")}: ${root.safeText(VpnService.currentMode, "-")}`
                                         toneColor: root.heroAccent
                                     }
 
                                     TagChip {
-                                        text: `${root.t("config.protocol", "Protocol")}: ${root.safeText(AdGuardVpnService.currentProtocolRaw || AdGuardVpnService.currentProtocol, "-")}`
+                                        text: `${root.t("config.protocol", "Protocol")}: ${root.safeText(VpnService.currentProtocolRaw || VpnService.currentProtocol, "-")}`
                                         toneColor: root.heroAccent
                                     }
 
                                     TagChip {
-                                        text: `${root.t("config.update_channel", "Update channel")}: ${root.safeText(AdGuardVpnService.currentUpdateChannel, "-")}`
+                                        text: `${root.t("config.update_channel", "Update channel")}: ${root.safeText(VpnService.currentUpdateChannel, "-")}`
                                         toneColor: root.heroAccent
                                     }
                                 }
@@ -778,21 +805,21 @@ PluginComponent {
                                     MetricTile {
                                         Layout.fillWidth: true
                                         label: root.t("meta.account", "Account")
-                                        value: root.safeText(AdGuardVpnService.accountEmail, root.t("summary.not_logged", "not logged"))
+                                        value: root.safeText(VpnService.accountEmail, root.t("summary.not_logged", "not logged"))
                                         accentColor: root.heroAccent
                                     }
 
                                     MetricTile {
                                         Layout.fillWidth: true
                                         label: root.t("meta.last_sync", "Last sync")
-                                        value: root.formatTimestamp(AdGuardVpnService.lastRefreshMs)
+                                        value: root.formatTimestamp(VpnService.lastRefreshMs)
                                         accentColor: root.heroAccent
                                     }
 
                                     MetricTile {
                                         Layout.fillWidth: true
                                         label: root.t("meta.last_command", "Last command")
-                                        value: AdGuardVpnService.lastCommandText ? `${AdGuardVpnService.lastCommandText} (${AdGuardVpnService.lastCommandExitCode})` : root.t("meta.none", "None")
+                                        value: VpnService.lastCommandText ? `${VpnService.lastCommandText} (${VpnService.lastCommandExitCode})` : root.t("meta.none", "None")
                                         accentColor: root.heroAccent
                                     }
 
@@ -810,13 +837,13 @@ PluginComponent {
 
                                     VpnActionButton {
                                         width: parent.width
-                                        iconName: AdGuardVpnService.isConnected ? "link_off" : "link"
-                                        label: AdGuardVpnService.isConnected ? root.t("action.disconnect", "Disconnect") : root.t("action.connect", "Connect")
-                                        description: AdGuardVpnService.isConnected ? root.t("hero.disconnect_description", "Drop the current tunnel and keep the control surface ready.") : root.t("hero.connect_description", "Start the VPN using your preferred strategy and current runtime settings.")
+                                        iconName: VpnService.isConnected ? "link_off" : "link"
+                                        label: VpnService.isConnected ? root.t("action.disconnect", "Disconnect") : root.t("action.connect", "Connect")
+                                        description: VpnService.isConnected ? root.t("hero.disconnect_description", "Drop the current tunnel and keep the control surface ready.") : root.t("hero.connect_description", "Start the VPN using your preferred strategy and current runtime settings.")
                                         prominent: true
-                                        active: AdGuardVpnService.isConnected
+                                        active: VpnService.isConnected
                                         actionEnabled: root.commandsAvailable
-                                        onTriggered: AdGuardVpnService.toggleConnection()
+                                        onTriggered: VpnService.toggleConnection()
                                     }
 
                                     RowLayout {
@@ -829,7 +856,7 @@ PluginComponent {
                                             label: root.t("action.fastest", "Fastest")
                                             compact: true
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.connectFastest()
+                                            onTriggered: VpnService.connectFastest()
                                         }
 
                                         VpnActionButton {
@@ -837,8 +864,8 @@ PluginComponent {
                                             iconName: "refresh"
                                             label: root.t("action.refresh", "Refresh")
                                             compact: true
-                                            actionEnabled: !AdGuardVpnService.commandRunning
-                                            onTriggered: AdGuardVpnService.refreshAll(true)
+                                            actionEnabled: !VpnService.commandRunning
+                                            onTriggered: VpnService.refreshAll(true)
                                         }
 
                                         VpnActionButton {
@@ -846,17 +873,17 @@ PluginComponent {
                                             iconName: "article"
                                             label: root.t("action.open_log", "Open Log")
                                             compact: true
-                                            actionEnabled: !AdGuardVpnService.commandRunning
+                                            actionEnabled: !VpnService.commandRunning
                                             onTriggered: {
-                                                ToastService.showInfo(root.t("app.title", "AdGuard VPN"), root.t("toast.log_opening", "Opening tunnel log..."));
-                                                AdGuardVpnService.openTunnelLog();
+                                                ToastService.showInfo(root.t("app.title", "Proton VPN"), root.t("toast.log_opening", "Opening tunnel log..."));
+                                                VpnService.openTunnelLog();
                                             }
                                         }
                                     }
                                 }
 
                                 Rectangle {
-                                    visible: !!AdGuardVpnService.lastCommandOutput
+                                    visible: !!VpnService.lastCommandOutput
                                     width: parent.width
                                     implicitHeight: outputColumn.implicitHeight + Theme.spacingM * 2
                                     radius: Theme.cornerRadius
@@ -880,7 +907,7 @@ PluginComponent {
 
                                         StyledText {
                                             width: parent.width
-                                            text: AdGuardVpnService.lastCommandOutput
+                                            text: VpnService.lastCommandOutput
                                             color: Theme.surfaceText
                                             font.pixelSize: Theme.fontSizeSmall
                                             wrapMode: Text.WordWrap
@@ -895,114 +922,61 @@ PluginComponent {
                         SectionFrame {
                             title: root.t("section.locations", "Locations")
                             subtitle: root.t("locations.section_subtitle", "Search the ranked list, jump straight to a region, or save a default route.")
-                            aside: `${root.filteredLocations.length}/${AdGuardVpnService.locations.length || 0}`
+                            aside: `${root.filteredLocations.length}/${VpnService.locations.length || 0}`
 
                             Column {
                                 width: parent.width
                                 spacing: Theme.spacingS
 
-                                RowLayout {
+                                Column {
                                     width: parent.width
-                                    spacing: Theme.spacingS
+                                    spacing: 4
 
-                                    Column {
-                                        Layout.fillWidth: true
-                                        spacing: 4
-
-                                        StyledText {
-                                            width: parent.width
-                                            text: root.t("locations.search_label", "Browse list")
-                                            color: Theme.surfaceVariantText
-                                            font.pixelSize: Theme.fontSizeSmall
-                                        }
-
-                                        Item {
-                                            Layout.fillWidth: true
-                                            implicitHeight: 42
-
-                                            DankIcon {
-                                                anchors.left: parent.left
-                                                anchors.leftMargin: Theme.spacingM
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                name: "search"
-                                                size: 16
-                                                color: Theme.surfaceVariantText
-                                            }
-
-                                            TextField {
-                                                id: locationsSearchInput
-                                                anchors.fill: parent
-                                                placeholderText: activeFocus ? "" : root.t("locations.search_placeholder", "Filter by city, country, or ISO")
-                                                placeholderTextColor: Theme.surfaceVariantText
-                                                leftPadding: Theme.spacingXL
-                                                rightPadding: Theme.spacingM
-                                                topPadding: Theme.spacingS
-                                                bottomPadding: Theme.spacingS
-                                                verticalAlignment: TextInput.AlignVCenter
-                                                text: root.locationsSearchText
-                                                selectByMouse: true
-                                                color: Theme.surfaceText
-                                                selectedTextColor: Theme.onPrimary
-                                                selectionColor: Theme.primary
-                                                onTextChanged: root.locationsSearchText = text
-
-                                                background: Rectangle {
-                                                    radius: Theme.cornerRadius
-                                                    color: Theme.surfaceContainer
-                                                    border.width: 1
-                                                    border.color: locationsSearchInput.activeFocus ? Theme.primary : Theme.outlineVariant
-                                                }
-                                            }
-                                        }
+                                    StyledText {
+                                        width: parent.width
+                                        text: root.t("locations.search_destination_label", "Search destination")
+                                        color: Theme.surfaceVariantText
+                                        font.pixelSize: Theme.fontSizeSmall
                                     }
 
-                                    Column {
-                                        Layout.fillWidth: true
-                                        spacing: 4
+                                    Item {
+                                        width: parent.width
+                                        implicitHeight: 42
 
-                                        StyledText {
-                                            width: parent.width
-                                            text: root.t("locations.destination_label", "Direct destination")
+                                        DankIcon {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Theme.spacingM
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            name: "search"
+                                            size: 16
                                             color: Theme.surfaceVariantText
-                                            font.pixelSize: Theme.fontSizeSmall
                                         }
 
-                                        Item {
-                                            Layout.fillWidth: true
-                                            implicitHeight: 42
-
-                                            DankIcon {
-                                                anchors.left: parent.left
-                                                anchors.leftMargin: Theme.spacingM
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                name: "near_me"
-                                                size: 16
-                                                color: Theme.surfaceVariantText
+                                        TextField {
+                                            id: locationsSearchInput
+                                            anchors.fill: parent
+                                            placeholderText: activeFocus ? "" : root.t("locations.placeholder", "City, country, or ISO code (e.g. Sao Paulo / BR)")
+                                            placeholderTextColor: Theme.surfaceVariantText
+                                            leftPadding: Theme.spacingXL
+                                            rightPadding: Theme.spacingM
+                                            topPadding: Theme.spacingS
+                                            bottomPadding: Theme.spacingS
+                                            verticalAlignment: TextInput.AlignVCenter
+                                            text: root.locationsSearchText
+                                            selectByMouse: true
+                                            color: Theme.surfaceText
+                                            selectedTextColor: Theme.onPrimary
+                                            selectionColor: Theme.primary
+                                            onTextChanged: {
+                                                root.locationsSearchText = text;
+                                                root.locationInputText = text;
                                             }
 
-                                            TextField {
-                                                id: locationInput
-                                                anchors.fill: parent
-                                                placeholderText: activeFocus ? "" : root.t("locations.placeholder", "City, country, or ISO code (e.g. Sao Paulo / BR)")
-                                                placeholderTextColor: Theme.surfaceVariantText
-                                                leftPadding: Theme.spacingXL
-                                                rightPadding: Theme.spacingM
-                                                topPadding: Theme.spacingS
-                                                bottomPadding: Theme.spacingS
-                                                verticalAlignment: TextInput.AlignVCenter
-                                                text: root.locationInputText
-                                                selectByMouse: true
-                                                color: Theme.surfaceText
-                                                selectedTextColor: Theme.onPrimary
-                                                selectionColor: Theme.primary
-                                                onTextChanged: root.locationInputText = text
-
-                                                background: Rectangle {
-                                                    radius: Theme.cornerRadius
-                                                    color: Theme.surfaceContainer
-                                                    border.width: 1
-                                                    border.color: locationInput.activeFocus ? Theme.primary : Theme.outlineVariant
-                                                }
+                                            background: Rectangle {
+                                                radius: Theme.cornerRadius
+                                                color: Theme.surfaceContainer
+                                                border.width: 1
+                                                border.color: locationsSearchInput.activeFocus ? Theme.primary : Theme.outlineVariant
                                             }
                                         }
                                     }
@@ -1017,8 +991,23 @@ PluginComponent {
                                         iconName: "near_me"
                                         label: root.t("action.connect", "Connect")
                                         compact: true
-                                        actionEnabled: root.commandsAvailable && locationInput.text.trim().length > 0
-                                        onTriggered: AdGuardVpnService.connectToLocation(locationInput.text.trim())
+                                        actionEnabled: root.commandsAvailable && locationsSearchInput.text.trim().length > 0
+                                        onTriggered: {
+                                            const destination = locationsSearchInput.text.trim();
+                                            if (!destination) {
+                                                return;
+                                            }
+                                            VpnService.connectToLocation(destination);
+                                        }
+                                    }
+
+                                    VpnActionButton {
+                                        Layout.fillWidth: true
+                                        iconName: "public"
+                                        label: root.t("action.connect_country", "Connect Country")
+                                        compact: true
+                                        actionEnabled: root.commandsAvailable && !!VpnService.selectedCountryIso
+                                        onTriggered: VpnService.connectToCountry(VpnService.selectedCountryIso)
                                     }
 
                                     VpnActionButton {
@@ -1026,12 +1015,12 @@ PluginComponent {
                                         iconName: "save"
                                         label: root.t("action.set_default", "Set Default")
                                         compact: true
-                                        actionEnabled: locationInput.text.trim().length > 0
+                                        actionEnabled: locationsSearchInput.text.trim().length > 0
                                         onTriggered: {
-                                            const value = locationInput.text.trim();
+                                            const value = locationsSearchInput.text.trim();
                                             root.locationInputText = value;
-                                            AdGuardVpnService.saveSetting("defaultLocation", value);
-                                            ToastService.showInfo(root.t("app.title", "AdGuard VPN"), root.t("toast.default_location_saved", "Default location saved: {location}", {
+                                            VpnService.saveSetting("defaultLocation", value);
+                                            ToastService.showInfo(root.t("app.title", "Proton VPN"), root.t("toast.default_location_saved", "Default location saved: {location}", {
                                                 location: value
                                             }));
                                         }
@@ -1046,8 +1035,8 @@ PluginComponent {
                                         Layout.fillWidth: true
                                         text: root.t("locations.filtered_count", "Showing {shown}/{total} • Last update: {time}", {
                                             shown: root.filteredLocations.length,
-                                            total: AdGuardVpnService.locations.length,
-                                            time: root.formatTimestamp(AdGuardVpnService.lastLocationsRefreshMs)
+                                            total: VpnService.locations.length,
+                                            time: root.formatTimestamp(VpnService.lastLocationsRefreshMs)
                                         })
                                         color: Theme.surfaceVariantText
                                         font.pixelSize: Theme.fontSizeSmall
@@ -1075,36 +1064,49 @@ PluginComponent {
                                 }
 
                                 EmptyStateCard {
-                                    visible: !AdGuardVpnService.commandRunning && root.locationsSearchText.trim().length === 0 && root.filteredLocations.length === 0
+                                    visible: !VpnService.commandRunning && root.locationsSearchText.trim().length === 0 && root.filteredLocations.length === 0
                                     title: root.t("locations.empty_title", "No ranked locations yet")
                                     body: root.t("locations.empty_body", "Fetch the latest list from the CLI to unlock quick-connect suggestions and favorites.")
                                     actionLabel: root.t("action.refresh", "Refresh")
                                     actionIcon: "refresh"
-                                    actionEnabled: !AdGuardVpnService.commandRunning
-                                    onActionTriggered: AdGuardVpnService.refreshAll(true)
+                                    actionEnabled: !VpnService.commandRunning
+                                    onActionTriggered: VpnService.refreshAll(true)
                                 }
 
-                                Column {
+                                Rectangle {
                                     visible: root.filteredLocations.length > 0
                                     width: parent.width
-                                    spacing: Theme.spacingS
+                                    height: Math.min(locationList.contentHeight, (8 * 68) + (7 * Theme.spacingS))
+                                    radius: Theme.cornerRadius
+                                    color: Theme.withAlpha(Theme.surfaceContainerHighest, 0.35)
+                                    border.width: 1
+                                    border.color: Theme.withAlpha(Theme.surfaceText, 0.08)
+                                    clip: true
 
-                                    Repeater {
-                                        model: Math.min(8, root.filteredLocations.length)
+                                    ListView {
+                                        id: locationList
+                                        anchors.fill: parent
+                                        anchors.margins: Theme.spacingXS
+                                        clip: true
+                                        spacing: Theme.spacingS
+                                        model: root.filteredLocations
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        ScrollBar.vertical: ScrollBar {}
 
-                                        StyledRect {
+                                        delegate: StyledRect {
                                             id: locationCard
 
-                                            required property int index
-                                            readonly property var locationItem: root.filteredLocations[index]
-                                            readonly property bool favorite: AdGuardVpnService.isFavoriteLocation(locationItem.iso)
+                                            required property var modelData
+                                            readonly property var locationItem: modelData
+                                            readonly property bool favorite: VpnService.isFavoriteLocation(locationItem.iso)
+                                            readonly property bool selected: (VpnService.selectedCountryIso || "").toUpperCase() === (locationItem.iso || "")
 
-                                            width: parent.width
+                                            width: ListView.view.width
                                             implicitHeight: locationRow.implicitHeight + Theme.spacingM * 2
                                             radius: Theme.cornerRadius
                                             color: locationMouse.containsMouse ? Theme.surfaceContainerHighest : Theme.surfaceContainer
                                             border.width: 1
-                                            border.color: locationCard.favorite ? Theme.withAlpha(Theme.primary, 0.28) : Theme.withAlpha(Theme.surfaceText, 0.08)
+                                            border.color: locationCard.selected ? Theme.withAlpha(Theme.primary, 0.5) : (locationCard.favorite ? Theme.withAlpha(Theme.primary, 0.28) : Theme.withAlpha(Theme.surfaceText, 0.08))
                                             scale: locationMouse.containsMouse ? 1.004 : 1.0
 
                                             Behavior on color {
@@ -1130,7 +1132,7 @@ PluginComponent {
                                                 anchors.fill: parent
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
-                                                onClicked: AdGuardVpnService.connectToLocation(locationCard.locationItem.iso)
+                                                onClicked: VpnService.selectCountry(locationCard.locationItem.iso, locationCard.locationItem.country)
                                             }
 
                                             RowLayout {
@@ -1172,7 +1174,7 @@ PluginComponent {
 
                                                     StyledText {
                                                         width: parent.width
-                                                        text: root.t("locations.row_hint", "Tap to connect immediately")
+                                                        text: locationCard.selected ? root.t("locations.country_selected_hint", "Country selected. Cities loaded below.") : root.t("locations.row_select_hint", "Tap to select this country")
                                                         color: Theme.surfaceVariantText
                                                         font.pixelSize: Theme.fontSizeSmall - 1
                                                         elide: Text.ElideRight
@@ -1218,7 +1220,168 @@ PluginComponent {
                                                         anchors.fill: parent
                                                         hoverEnabled: true
                                                         cursorShape: Qt.PointingHandCursor
-                                                        onClicked: AdGuardVpnService.toggleFavoriteLocation(locationCard.locationItem.iso)
+                                                        onClicked: VpnService.toggleFavoriteLocation(locationCard.locationItem.iso)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Column {
+                                    visible: !!VpnService.selectedCountryIso
+                                    width: parent.width
+                                    spacing: Theme.spacingS
+
+                                    RowLayout {
+                                        width: parent.width
+                                        spacing: Theme.spacingS
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: root.t("locations.cities_title", "Cities in {country} ({iso})", {
+                                                country: VpnService.selectedCountryName || "-",
+                                                iso: VpnService.selectedCountryIso || "--"
+                                            })
+                                            color: Theme.surfaceText
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            font.weight: Font.DemiBold
+                                        }
+
+                                        VpnActionButton {
+                                            Layout.preferredWidth: 120
+                                            iconName: "refresh"
+                                            label: root.t("action.refresh", "Refresh")
+                                            compact: true
+                                            actionEnabled: !VpnService.citiesLoading
+                                            onTriggered: VpnService.refreshCitiesForCountry(VpnService.selectedCountryIso, true)
+                                        }
+                                    }
+
+                                    Item {
+                                        width: parent.width
+                                        implicitHeight: 42
+
+                                        DankIcon {
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Theme.spacingM
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            name: "location_city"
+                                            size: 16
+                                            color: Theme.surfaceVariantText
+                                        }
+
+                                        TextField {
+                                            id: citySearchInput
+                                            anchors.fill: parent
+                                            placeholderText: activeFocus ? "" : root.t("locations.cities_search_placeholder", "Search city")
+                                            placeholderTextColor: Theme.surfaceVariantText
+                                            leftPadding: Theme.spacingXL
+                                            rightPadding: Theme.spacingM
+                                            topPadding: Theme.spacingS
+                                            bottomPadding: Theme.spacingS
+                                            verticalAlignment: TextInput.AlignVCenter
+                                            text: root.citySearchText
+                                            selectByMouse: true
+                                            color: Theme.surfaceText
+                                            selectedTextColor: Theme.onPrimary
+                                            selectionColor: Theme.primary
+                                            onTextChanged: root.citySearchText = text
+
+                                            background: Rectangle {
+                                                radius: Theme.cornerRadius
+                                                color: Theme.surfaceContainer
+                                                border.width: 1
+                                                border.color: citySearchInput.activeFocus ? Theme.primary : Theme.outlineVariant
+                                            }
+                                        }
+                                    }
+
+                                    StyledText {
+                                        visible: VpnService.citiesLoading
+                                        width: parent.width
+                                        text: root.t("locations.cities_loading", "Loading cities...")
+                                        color: Theme.surfaceVariantText
+                                        font.pixelSize: Theme.fontSizeSmall
+                                    }
+
+                                    StyledText {
+                                        visible: !VpnService.citiesLoading && root.filteredCities.length === 0
+                                        width: parent.width
+                                        text: root.t("locations.cities_empty", "No cities available for this country")
+                                        color: Theme.surfaceVariantText
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        wrapMode: Text.WordWrap
+                                    }
+
+                                    Rectangle {
+                                        visible: root.filteredCities.length > 0
+                                        width: parent.width
+                                        height: Math.min(cityList.contentHeight, (6 * 64) + (5 * Theme.spacingS))
+                                        radius: Theme.cornerRadius
+                                        color: Theme.withAlpha(Theme.surfaceContainerHighest, 0.35)
+                                        border.width: 1
+                                        border.color: Theme.withAlpha(Theme.surfaceText, 0.08)
+                                        clip: true
+
+                                        ListView {
+                                            id: cityList
+                                            anchors.fill: parent
+                                            anchors.margins: Theme.spacingXS
+                                            clip: true
+                                            spacing: Theme.spacingS
+                                            model: root.filteredCities
+                                            boundsBehavior: Flickable.StopAtBounds
+                                            ScrollBar.vertical: ScrollBar {}
+
+                                            delegate: StyledRect {
+                                                required property var modelData
+                                                readonly property var cityItem: modelData
+
+                                                width: ListView.view.width
+                                                implicitHeight: cityColumn.implicitHeight + Theme.spacingM * 2
+                                                radius: Theme.cornerRadius
+                                                color: cityMouse.containsMouse ? Theme.surfaceContainerHighest : Theme.surfaceContainer
+                                                border.width: 1
+                                                border.color: Theme.withAlpha(Theme.surfaceText, 0.08)
+
+                                                MouseArea {
+                                                    id: cityMouse
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: VpnService.connectToCity(cityItem.name)
+                                                }
+
+                                                Column {
+                                                    id: cityColumn
+                                                    anchors.fill: parent
+                                                    anchors.margins: Theme.spacingM
+                                                    spacing: 2
+
+                                                    StyledText {
+                                                        width: parent.width
+                                                        text: cityItem.name || ""
+                                                        color: Theme.surfaceText
+                                                        font.pixelSize: Theme.fontSizeSmall
+                                                        font.weight: Font.DemiBold
+                                                        elide: Text.ElideRight
+                                                    }
+
+                                                    StyledText {
+                                                        visible: !!cityItem.featuresText
+                                                        width: parent.width
+                                                        text: cityItem.featuresText
+                                                        color: Theme.surfaceVariantText
+                                                        font.pixelSize: Theme.fontSizeSmall - 1
+                                                        elide: Text.ElideRight
+                                                    }
+
+                                                    StyledText {
+                                                        width: parent.width
+                                                        text: root.t("locations.cities_row_hint", "Tap to connect to this city")
+                                                        color: Theme.surfaceVariantText
+                                                        font.pixelSize: Theme.fontSizeSmall - 1
                                                     }
                                                 }
                                             }
@@ -1249,21 +1412,21 @@ PluginComponent {
                                         VpnActionButton {
                                             Layout.fillWidth: true
                                             iconName: "device_hub"
-                                            label: "TUN"
+                                            label: "STANDARD"
                                             compact: true
-                                            active: (AdGuardVpnService.currentMode || "").toLowerCase() === "tun"
+                                            active: (VpnService.currentMode || "").toLowerCase() === "standard"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setMode("tun")
+                                            onTriggered: VpnService.setMode("tun")
                                         }
 
                                         VpnActionButton {
                                             Layout.fillWidth: true
                                             iconName: "safety_check"
-                                            label: "SOCKS"
+                                            label: "OFF"
                                             compact: true
-                                            active: (AdGuardVpnService.currentMode || "").toLowerCase() === "socks"
+                                            active: (VpnService.currentMode || "").toLowerCase() === "off"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setMode("socks")
+                                            onTriggered: VpnService.setMode("socks")
                                         }
                                     }
                                 }
@@ -1279,31 +1442,31 @@ PluginComponent {
                                         VpnActionButton {
                                             Layout.fillWidth: true
                                             iconName: "auto_awesome"
-                                            label: root.t("settings.ip_stack.auto", "Auto")
+                                            label: "OFF"
                                             compact: true
-                                            active: AdGuardVpnService.currentProtocol === "auto"
+                                            active: VpnService.currentProtocol === "auto"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setProtocol("auto")
+                                            onTriggered: VpnService.setProtocol("auto")
                                         }
 
                                         VpnActionButton {
                                             Layout.fillWidth: true
                                             iconName: "http"
-                                            label: "HTTP2"
+                                            label: "MALWARE"
                                             compact: true
-                                            active: AdGuardVpnService.currentProtocol === "http2"
+                                            active: VpnService.currentProtocol === "http2"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setProtocol("http2")
+                                            onTriggered: VpnService.setProtocol("http2")
                                         }
 
                                         VpnActionButton {
                                             Layout.fillWidth: true
                                             iconName: "rocket_launch"
-                                            label: "QUIC"
+                                            label: "FULL"
                                             compact: true
-                                            active: AdGuardVpnService.currentProtocol === "quic"
+                                            active: VpnService.currentProtocol === "quic"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setProtocol("quic")
+                                            onTriggered: VpnService.setProtocol("quic")
                                         }
                                     }
                                 }
@@ -1322,9 +1485,9 @@ PluginComponent {
                                             iconName: "new_releases"
                                             label: root.t("action.release", "Release")
                                             compact: true
-                                            active: AdGuardVpnService.currentUpdateChannel === "release"
+                                            active: VpnService.currentUpdateChannel === "release"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setUpdateChannel("release")
+                                            onTriggered: VpnService.setUpdateChannel("release")
                                         }
 
                                         VpnActionButton {
@@ -1332,9 +1495,9 @@ PluginComponent {
                                             iconName: "science"
                                             label: root.t("action.beta", "Beta")
                                             compact: true
-                                            active: AdGuardVpnService.currentUpdateChannel === "beta"
+                                            active: VpnService.currentUpdateChannel === "beta"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setUpdateChannel("beta")
+                                            onTriggered: VpnService.setUpdateChannel("beta")
                                         }
 
                                         VpnActionButton {
@@ -1342,9 +1505,9 @@ PluginComponent {
                                             iconName: "bolt"
                                             label: root.t("action.nightly", "Nightly")
                                             compact: true
-                                            active: AdGuardVpnService.currentUpdateChannel === "nightly"
+                                            active: VpnService.currentUpdateChannel === "nightly"
                                             actionEnabled: root.commandsAvailable
-                                            onTriggered: AdGuardVpnService.setUpdateChannel("nightly")
+                                            onTriggered: VpnService.setUpdateChannel("nightly")
                                         }
                                     }
                                 }
@@ -1363,7 +1526,7 @@ PluginComponent {
                                             Layout.fillWidth: true
                                             Layout.minimumWidth: 0
                                             Layout.preferredWidth: 1
-                                            placeholderText: root.t("config.dns_placeholder", "1.1.1.1, tls://dns.adguard-dns.com, https://dns.example/dns-query")
+                                            placeholderText: root.t("config.dns_placeholder", "1.1.1.1, tls://dns.dns.example, https://dns.example/dns-query")
                                             backgroundColor: Theme.surfaceContainer
                                             normalBorderColor: Theme.outlineVariant
                                             focusedBorderColor: Theme.primary
@@ -1380,7 +1543,7 @@ PluginComponent {
                                             label: root.t("action.apply", "Apply")
                                             compact: true
                                             actionEnabled: root.commandsAvailable && dnsInput.text.trim().length > 0
-                                            onTriggered: AdGuardVpnService.setDns(dnsInput.text.trim())
+                                            onTriggered: VpnService.setDns(dnsInput.text.trim())
                                         }
                                     }
                                 }

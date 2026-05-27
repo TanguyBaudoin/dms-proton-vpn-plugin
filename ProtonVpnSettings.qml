@@ -5,10 +5,10 @@ import qs.Modules.Plugins
 
 PluginSettings {
     id: root
-    pluginId: "adguardVPplugin"
+    pluginId: "protonVPNplugin"
 
     function t(key, fallback, params) {
-        return AdGuardVpnI18n.tr(key, fallback, params);
+        return VpnI18n.tr(key, fallback, params);
     }
 
     StyledRect {
@@ -64,7 +64,7 @@ PluginSettings {
 
             StyledText {
                 width: parent.width
-                text: root.t("settings.title", "AdGuard VPN Settings")
+                text: root.t("settings.title", "Proton VPN Settings")
                 font.pixelSize: Theme.fontSizeLarge
                 font.weight: Font.Bold
                 color: Theme.surfaceText
@@ -73,7 +73,7 @@ PluginSettings {
 
             StyledText {
                 width: parent.width
-                text: root.t("settings.subtitle", "Configure how the widget executes adguardvpn-cli and how aggressively it refreshes telemetry.")
+                text: root.t("settings.subtitle", "Configure how the widget executes protonvpn and how aggressively it refreshes telemetry.")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
@@ -206,17 +206,17 @@ PluginSettings {
     }
 
     StringSetting {
-        settingKey: "adguardBinary"
-        label: root.t("settings.binary.label", "adguardvpn-cli Binary")
-        description: root.t("settings.binary.description", "Binary name or full path used to execute the AdGuard CLI.")
-        defaultValue: "adguardvpn-cli"
-        placeholder: "adguardvpn-cli"
+        settingKey: "vpnBinary"
+        label: root.t("settings.binary.label", "protonvpn Binary")
+        description: root.t("settings.binary.description", "Binary name or full path used to execute the VPN CLI.")
+        defaultValue: "protonvpn"
+        placeholder: "protonvpn"
     }
 
     SliderSetting {
         settingKey: "refreshIntervalSec"
         label: root.t("settings.refresh_interval.label", "Status Refresh Interval")
-        description: root.t("settings.refresh_interval.description", "How often the widget polls `adguardvpn-cli status`.")
+        description: root.t("settings.refresh_interval.description", "How often the widget polls `protonvpn status`.")
         defaultValue: 8
         minimum: 3
         maximum: 120
@@ -228,9 +228,9 @@ PluginSettings {
         settingKey: "locationsCount"
         label: root.t("settings.locations_count.label", "Location Samples")
         description: root.t("settings.locations_count.description", "Number of locations fetched for quick-connect suggestions.")
-        defaultValue: 20
-        minimum: 5
-        maximum: 100
+        defaultValue: 0
+        minimum: 0
+        maximum: 300
         unit: root.t("settings.unit.items", "items")
         leftIcon: "public"
     }

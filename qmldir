@@ -1,2 +1,4 @@
-singleton AdGuardVpnService 1.0 AdGuardVpnService.qml
-singleton AdGuardVpnI18n 1.0 AdGuardVpnI18n.qml
+singleton VpnService 1.0 ProtonVpnService.qml
+singleton VpnI18n 1.0 ProtonVpnI18n.qml
+singleton ProtonVpnService 1.0 ProtonVpnService.qml
+singleton ProtonVpnI18n 1.0 ProtonVpnI18n.qml

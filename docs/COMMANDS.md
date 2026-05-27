@@ -7,13 +7,13 @@ Complete mapping between Service methods and the CLI commands they invoke.
 ## How Commands Run
 
 ```text
-AdGuardVpnService.runCli(args)
+ProtonVpnService.runCli(args)
   → buildArgs(baseArgs, includeConnectFlags)
-  → Proc.runCommand([adguardBinary, ...finalArgs])
+  → Proc.runCommand([vpnBinary, ...finalArgs])
   → strip ANSI → parse output → update properties
 ```
 
-- **Binary:** `adguardvpn-cli` (default, configurable via `adguardBinary` setting).
+- **Binary:** `protonvpn` (default, configurable via `vpnBinary` setting).
 - **`buildArgs()`** appends `-y`, `--no-progress`, and `-4`/`-6` flags when `includeConnectFlags` is true.
 
 ---
@@ -53,7 +53,7 @@ These are triggered by user interaction. All timers are **suspended** during exe
 All CLI output goes through a pipeline:
 
 1. **ANSI strip** — escape sequences removed before any parsing.
-2. **Format-specific parser** — pure functions in `AdGuardVpnParsers.js`.
+2. **Format-specific parser** — pure functions in `ProtonVpnParsers.js`.
 3. **Fallback** — on parse failure, properties receive safe defaults ("Unknown", empty, `false`).
 
 ### Parser Highlights

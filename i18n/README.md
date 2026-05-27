@@ -47,14 +47,14 @@ Translate all **values** inside `es_ES.js`. Keys must stay exactly the same.
 
 ### Step 2 — Register in I18n singleton
 
-Edit `AdGuardVpnI18n.qml`:
+Edit `ProtonVpnI18n.qml`:
 
 - Add a case in `normalizeLocale()` to map the system locale to your file.
 - Add a case in `getBundle()` to load the new `.js` module.
 
 ### Step 3 — Add to Settings dropdown
 
-Edit `AdGuardVpnSettings.qml`:
+Edit `ProtonVpnSettings.qml`:
 
 - Add the new locale as an option in the language `SelectionSetting`.
 
@@ -82,5 +82,5 @@ Include the new locale file plus the two QML edits. Done!
 | -------------------------- | ------------------------------------------------------------------- |
 | **Never rename keys**      | `"status.connected"` must stay `"status.connected"`                 |
 | **Keep placeholders**      | `{location}`, `{mode}`, `{count}` — translate around them           |
-| **Keep technical strings** | `adguardvpn-cli`, `TUN`, `SOCKS`, `QUIC` stay as-is                 |
+| **Keep technical strings** | `protonvpn`, `TUN`, `SOCKS`, `QUIC` stay as-is                 |
 | **Match tone**             | Keep translations concise and consistent with the base English tone |

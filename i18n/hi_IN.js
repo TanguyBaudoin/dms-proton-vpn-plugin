@@ -2,7 +2,7 @@
 .pragma library
 
 var translations = ({
-    "app.title": "AdGuard VPN",
+    "app.title": "Proton VPN",
 
     "status.unknown": "अज्ञात",
     "status.connected": "कनेक्टेड ({location})",
@@ -30,8 +30,8 @@ var translations = ({
     "action.favorite": "पसंदीदा",
     "action.unfavorite": "पसंदीदा हटाएं",
 
-    "settings.title": "AdGuard VPN सेटिंग्स",
-    "settings.subtitle": "कॉन्फ़िगर करें कि विजेट adguardvpn-cli कैसे चलाता है और टेलीमेट्री कितनी बार अपडेट करता है।",
+    "settings.title": "Proton VPN सेटिंग्स",
+    "settings.subtitle": "कॉन्फ़िगर करें कि विजेट protonvpn कैसे चलाता है और टेलीमेट्री कितनी बार अपडेट करता है।",
     "settings.group.interface": "इंटरफ़ेस",
     "settings.group.runtime": "रनटाइम",
     "settings.group.behavior": "कनेक्शन व्यवहार",

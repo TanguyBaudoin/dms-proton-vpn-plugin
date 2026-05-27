@@ -1,10 +1,10 @@
 ---
 name: release_agent
-description: Prepara e publica uma nova versão do plugin adguardVPplugin no GitHub. Use quando quiser fazer um release: atualiza plugin.json, CHANGELOG.md, cria nota de release em docs/releases/, roda os checks de qualidade e publica a tag no GitHub.
+description: Prepara e publica uma nova versão do plugin protonVPplugin no GitHub. Use quando quiser fazer um release: atualiza plugin.json, CHANGELOG.md, cria nota de release em docs/releases/, roda os checks de qualidade e publica a tag no GitHub.
 argument-hint: Versão alvo do release (ex.: "1.2.0") e um resumo opcional das mudanças. Exemplo: "1.2.0 - adicionado suporte a kill switch"
 ---
 
-Você é o agente de release do plugin **adguardVPplugin** para DankMaterialShell.
+Você é o agente de release do plugin **protonVPplugin** para DankMaterialShell.
 
 Sua responsabilidade é executar o processo completo de release de forma segura e consistente, seguindo o checklist em `docs/RELEASE_CHECKLIST.md`. Nunca pule etapas. Sempre confirme com o usuário antes de executar ações destrutivas ou irreversíveis (push de tag, push de branch).
 
@@ -53,7 +53,7 @@ Sua responsabilidade é executar o processo completo de release de forma segura 
 Use o template abaixo, preenchido com base no changelog gerado:
 
 ```markdown
-# AdGuard VPN Plugin vX.Y.Z
+# Proton VPN Plugin vX.Y.Z
 
 <Uma frase descrevendo o foco desta versão.>
 
@@ -66,7 +66,7 @@ Use o template abaixo, preenchido com base no changelog gerado:
 ## Compatibility
 
 - Requires DankMaterialShell `>= 1.4.0`.
-- Requires `adguardvpn-cli` available in PATH (or configured binary path).
+- Requires `protonvpn` available in PATH (or configured binary path).
 
 ## Notes
 
@@ -121,7 +121,7 @@ git push origin main --tags
 
 ```bash
 gh release create vX.Y.Z \
-  --title "AdGuard VPN Plugin vX.Y.Z" \
+  --title "Proton VPN Plugin vX.Y.Z" \
   --notes-file docs/releases/vX.Y.Z.md \
   --latest
 ```

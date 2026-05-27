@@ -40,7 +40,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Fixed
 
-- Restored account detection when `adguardvpn-cli license` is slow by adding a longer command timeout and an in-flight refresh watchdog.
+- Restored account detection when `protonvpn license` is slow by adding a longer command timeout and an in-flight refresh watchdog.
 - Improved license parsing compatibility for alternate output formats (email/plan/devices/renewal variants).
 - Avoided clearing valid account metadata when license output is partial or transiently empty.
 - Recorded last-command diagnostics even when connect preflight fails.
@@ -68,7 +68,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Fixed
 
-- Reduced connection failures caused by stale or busy AdGuard VPN runtime socket state.
+- Reduced connection failures caused by stale or busy Proton VPN runtime socket state.
 - Added explicit user-facing errors for runtime busy and multi-default-route conditions.
 
 ### Changed
@@ -89,10 +89,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Location search & filter** — instant text filter in the popout location list.
 - **Auto-connect on startup** — optionally connect when the plugin/session starts.
 - **Auto-reconnect on drop** — optionally reconnect when the tunnel drops unexpectedly.
-- **Tunnel log viewer** — open `~/.local/share/adguardvpn-cli/tunnel.log` directly from the popout.
+- **Tunnel log viewer** — open `~/.local/share/protonvpn/tunnel.log` directly from the popout.
 - **Command history** — last command, exit code, first output line, and timestamp shown in diagnostics.
 - **Contextual error hints** — location-not-found errors now suggest refreshing and using ISO codes.
-- **Parsers module** (`AdGuardVpnParsers.js`) — all CLI parsers extracted into a standalone `.pragma library`.
+- **Parsers module** (`VpnParsers.js`) — all CLI parsers extracted into a standalone `.pragma library`.
 - **`buildArgs()` utility** — centralized connect-flag assembly (`-y`, `--no-progress`, `-4`/`-6`).
 - **Polling concurrency control** — timers pause during write actions to prevent overlapping reads.
 - **i18n key parity script** (`scripts/check-i18n-keys.mjs`) — automated validation across locale files.
@@ -125,7 +125,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Fixed
 
-- DMS plugin enable failure caused by `AdGuardVpnI18n.qml` invalid `Connections` placement.
+- DMS plugin enable failure caused by `VpnI18n.qml` invalid `Connections` placement.
 - Widget focus-handling race for DNS input updates during typing.
 - QML warning path caused by unstable `Ref` usage in widget/service wiring.
 
@@ -142,7 +142,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 ### Added
 
-- Initial AdGuard VPN widget plugin for DankMaterialShell.
+- Initial Proton VPN widget plugin for DankMaterialShell.
 - Live monitoring for status, config, license, and locations.
 - Actions: connect, disconnect, fastest, location connect.
 - Runtime config controls for mode, protocol, channel, and DNS.

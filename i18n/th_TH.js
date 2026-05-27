@@ -2,7 +2,7 @@
 .pragma library
 
 var translations = ({
-    "app.title": "AdGuard VPN",
+    "app.title": "Proton VPN",
 
     "status.unknown": "ไม่ทราบ",
     "status.connected": "เชื่อมต่อแล้ว ({location})",
@@ -30,8 +30,8 @@ var translations = ({
     "action.favorite": "รายการโปรด",
     "action.unfavorite": "เอาออกจากรายการโปรด",
 
-    "settings.title": "การตั้งค่า AdGuard VPN",
-    "settings.subtitle": "กำหนดค่าว่าวิดเจ็ตจะเรียกใช้ adguardvpn-cli อย่างไรและจะอัปเดต telemetry บ่อยแค่ไหน",
+    "settings.title": "การตั้งค่า Proton VPN",
+    "settings.subtitle": "กำหนดค่าว่าวิดเจ็ตจะเรียกใช้ protonvpn อย่างไรและจะอัปเดต telemetry บ่อยแค่ไหน",
     "settings.group.interface": "อินเทอร์เฟซ",
     "settings.group.runtime": "รันไทม์",
     "settings.group.behavior": "พฤติกรรมการเชื่อมต่อ",

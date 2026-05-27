@@ -2,7 +2,7 @@
 .pragma library
 
 var translations = ({
-    "app.title": "AdGuard VPN",
+    "app.title": "Proton VPN",
 
     "status.unknown": "Bilinmiyor",
     "status.connected": "Bagli ({location})",
@@ -30,8 +30,8 @@ var translations = ({
     "action.favorite": "Favori",
     "action.unfavorite": "Favoriden cikar",
 
-    "settings.title": "AdGuard VPN Ayarlari",
-    "settings.subtitle": "Widgetin adguardvpn-cli komutunu nasil calistirdigini ve telemetriyi ne siklikla yeniledigini ayarlayin.",
+    "settings.title": "Proton VPN Ayarlari",
+    "settings.subtitle": "Widgetin protonvpn komutunu nasil calistirdigini ve telemetriyi ne siklikla yeniledigini ayarlayin.",
     "settings.group.interface": "Arayuz",
     "settings.group.runtime": "Calisma zamani",
     "settings.group.behavior": "Baglanti davranisi",

@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the internal design and data flow of the AdGuard VPN plugin.
+This document describes the internal design and data flow of the Proton VPN plugin.
 
 ---
 
@@ -12,32 +12,32 @@ The plugin is organized into **four layers**, each with a single responsibility:
 ┌──────────────────────────────────────────────────────┐
 │                    DankBar / DMS                     │
 ├────────────────────────┬─────────────────────────────┤
-│   AdGuardVpnWidget     │   AdGuardVpnSettings        │
+│    ProtonVpnWidget     │    ProtonVpnSettings        │
 │   (bar pill + popout)  │   (DMS settings screen)     │
 ├────────────────────────┴─────────────────────────────┤
-│               AdGuardVpnService  (singleton)          │
+│               ProtonVpnService  (singleton)           │
 │   polling · actions · state · buildArgs · parsers     │
 ├──────────────────────────────────────────────────────┤
-│               AdGuardVpnI18n  (singleton)              │
+│               ProtonVpnI18n  (singleton)               │
 │              i18n/en.js · i18n/pt_BR.js                │
 ├──────────────────────────────────────────────────────┤
-│       AdGuardVpnParsers.js  (.pragma library)         │
+│       ProtonVpnParsers.js  (.pragma library)          │
 │   parseStatusOutput · parseConfigOutput · …           │
 └──────────────────────────────────────────────────────┘
          ↕ Proc.runCommand()
    ┌─────────────┐
-   │ adguardvpn- │
+   │ protonvpn   │
    │ cli (local) │
    └─────────────┘
 ```
 
 | Layer | File(s) | Role |
 | --- | --- | --- |
-| **UI** | `AdGuardVpnWidget.qml` | Bar pill, popout controls, location list, config cards |
-| **Settings** | `AdGuardVpnSettings.qml` | Declarative DMS setting controls |
-| **Service** | `AdGuardVpnService.qml` | Singleton: settings lifecycle, CLI execution, polling, state management |
-| **Localization** | `AdGuardVpnI18n.qml` + `i18n/*.js` | Translation lookups with fallback chain |
-| **Parsers** | `AdGuardVpnParsers.js` | Pure functions: parse CLI output into structured data |
+| **UI** | `ProtonVpnWidget.qml` | Bar pill, popout controls, location list, config cards |
+| **Settings** | `ProtonVpnSettings.qml` | Declarative DMS setting controls |
+| **Service** | `ProtonVpnService.qml` | Singleton: settings lifecycle, CLI execution, polling, state management |
+| **Localization** | `ProtonVpnI18n.qml` + `i18n/*.js` | Translation lookups with fallback chain |
+| **Parsers** | `ProtonVpnParsers.js` | Pure functions: parse CLI output into structured data |
 
 ---
 
@@ -99,7 +99,7 @@ All actions use `buildArgs()` to append `-y`, `--no-progress`, and IP stack flag
 
 ---
 
-## Parsers (`AdGuardVpnParsers.js`)
+## Parsers (`ProtonVpnParsers.js`)
 
 All parsers are **pure functions** in a `.pragma library` module — no QML/state dependencies.
 
@@ -123,14 +123,14 @@ The location parser tries **five column-splitting strategies** in order: multi-s
   - Quick actions (connect/disconnect, fastest, refresh, open log)
   - Locations (search filter, favorites, quick-connect by ISO)
   - Configuration (mode, protocol, update channel, DNS)
-- All labels go through `AdGuardVpnI18n.tr(key, fallback, params)`.
+- All labels go through `VpnI18n.tr(key, fallback, params)`.
 
 ---
 
 ## Settings Screen
 
 - Declarative DMS settings (`SelectionSetting`, `SliderSetting`, `ToggleSetting`, `StringSetting`).
-- Persists values that `AdGuardVpnService.loadSettings()` picks up on change.
+- Persists values that `VpnService.loadSettings()` picks up on change.
 - No direct CLI interaction.
 
 ---
@@ -152,4 +152,4 @@ The location parser tries **five column-splitting strategies** in order: multi-s
 | --- | --- |
 | `settings_read` | Load plugin settings from DMS storage |
 | `settings_write` | Persist plugin settings (polling interval, strategy, favorites, etc.) |
-| `process` | Execute local `adguardvpn-cli` commands via `Proc.runCommand` |
+| `process` | Execute local `protonvpn` commands via `Proc.runCommand` |

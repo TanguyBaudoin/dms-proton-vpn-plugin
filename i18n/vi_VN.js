@@ -2,7 +2,7 @@
 .pragma library
 
 var translations = ({
-    "app.title": "AdGuard VPN",
+    "app.title": "Proton VPN",
 
     "status.unknown": "Khong xac dinh",
     "status.connected": "Da ket noi ({location})",
@@ -30,8 +30,8 @@ var translations = ({
     "action.favorite": "Yeu thich",
     "action.unfavorite": "Bo yeu thich",
 
-    "settings.title": "Cai dat AdGuard VPN",
-    "settings.subtitle": "Cau hinh cach widget thuc thi adguardvpn-cli va tan suat cap nhat telemetry.",
+    "settings.title": "Cai dat Proton VPN",
+    "settings.subtitle": "Cau hinh cach widget thuc thi protonvpn va tan suat cap nhat telemetry.",
     "settings.group.interface": "Giao dien",
     "settings.group.runtime": "Runtime",
     "settings.group.behavior": "Hanh vi ket noi",

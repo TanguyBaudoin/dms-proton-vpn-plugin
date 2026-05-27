@@ -35,8 +35,8 @@ bash scripts/validate-qml.sh        # QML syntax validation
 ## 4. Manual Validation
 
 ```bash
-dms ipc plugins reload adguardVPplugin
-dms ipc plugins status adguardVPplugin
+dms ipc plugins reload protonVPplugin
+dms ipc plugins status protonVPplugin
 ```
 
 Verify in the widget/popout:

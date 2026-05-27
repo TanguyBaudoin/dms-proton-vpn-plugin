@@ -28,7 +28,7 @@ import "./i18n/ms_MY.js" as MsMY
 QtObject {
     id: root
 
-    readonly property string pluginId: "adguardVPplugin"
+    readonly property string pluginId: "protonVPNplugin"
 
     property string languageOverride: "auto"
     property string localeName: {
